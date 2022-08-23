@@ -13,9 +13,11 @@ import { ethers } from 'ethers'
 import * as SwapNormal from './abi/SwapNormal'
 import * as MetaSwap from './abi/SwapNormal'
 import * as VotingEscrow from './abi/VotingEscrow'
+import * as XSwapDeposit from './abi/XSwapDeposit'
 import * as MetaSwapHandlers from './mappings/metaSwap'
 import * as SwapNormalHandlers from './mappings/swapNormal'
 import * as VotingEscrowHandlers from './mappings/votingEscrow'
+import * as XSwapDepositHandlers from './mappings/xSwapDeposit'
 
 const SRS4_SWAP = '0x417E9d065ee22DFB7CC6C63C403600E27627F333'
 const LAY4_SWAP = '0x0fB8C4eB33A30eBb01588e3110968430E3E69D58'
@@ -23,6 +25,10 @@ const NASTR_SWAP = '0xEEa640c27620D7C448AD655B6e3FB94853AC01e3'
 const AVAULT_SWAP = '0xD8Bc543273B0E19eed34a295614963720c89f9e4'
 const BAI_META_SWAP = '0x290c7577D209c2d8DB06F377af31318cE31938fB'
 const OUSD_META_SWAP = '0xD18AbE9bcedeb5A9a65439e604b0BE8db0bdB176'
+const JPYC_META_DEPOSIT = '0x3cd1Fa4EeeFdf6c30E66c66A474e8E4dd509f54c'
+const WBTC_META_DEPOSIT = '0xD25Cf814EeE54840A08Db8dfAbFE445B1DE37f0f'
+const WETH_META_DEPOSIT = '0x2d5Da7c463B3E8f4CF1AF08a1aA0a5DB9BB644F7'
+const WBNB_META_DEPOSIT = '0xC9d4f937Fa8e0193b46817a41435a262867ff090'
 const VE_TOKEN_ADDRESS = '0xc9D383f1e6E5270D77ad8e198729e237b60b6397'
 
 const database = new TypeormDatabase()
@@ -145,6 +151,23 @@ const processor = new SubstrateBatchProcessor()
     .addEvmLog(VE_TOKEN_ADDRESS.toLowerCase(), {
         filter: [[VotingEscrow.events['Deposit(address,uint256,uint256,int128,uint256)'].topic]],
         range: { from: 815000 },
+    })
+    // JPYC Metapool
+    .addEvmLog(JPYC_META_DEPOSIT.toLowerCase(), {
+        filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
+        range: { from: 1099458 },
+    })
+    .addEvmLog(WBTC_META_DEPOSIT.toLowerCase(), {
+        filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
+        range: { from: 1138805 },
+    })
+    .addEvmLog(WETH_META_DEPOSIT.toLowerCase(), {
+        filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
+        range: { from: 1138820 },
+    })
+    .addEvmLog(WBNB_META_DEPOSIT.toLowerCase(), {
+        filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
+        range: { from: 1138838 },
     })
     .run(database, async (ctx) => {
         for (const block of ctx.blocks) {
@@ -306,11 +329,28 @@ const processor = new SubstrateBatchProcessor()
                         case VE_TOKEN_ADDRESS.toLowerCase():
                             switch (item.event.args.topics[0]) {
                                 case VotingEscrow.events['Deposit(address,uint256,uint256,int128,uint256)'].topic:
-                                    return VotingEscrowHandlers.handleDeposit({
+                                    await VotingEscrowHandlers.handleDeposit({
                                         ...ctx,
                                         block: block.header,
                                         event: item.event,
                                     })
+                                    break
+                            }
+                            break
+                        case JPYC_META_DEPOSIT.toLowerCase():
+                        case WBTC_META_DEPOSIT.toLowerCase():
+                        case WETH_META_DEPOSIT.toLowerCase():
+                        case WBNB_META_DEPOSIT.toLowerCase():
+                            switch (item.event.args.topics[0]) {
+                                case XSwapDeposit.events[
+                                    'TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'
+                                ].topic:
+                                    await XSwapDepositHandlers.handleTokenSwap({
+                                        ...ctx,
+                                        block: block.header,
+                                        event: item.event,
+                                    })
+                                    break
                             }
                             break
                     }
