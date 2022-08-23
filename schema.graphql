@@ -259,3 +259,9 @@ type Airdropee @entity {
   updatedAtBlock: BigInt!
   updatedAtTransaction: Bytes
 }
+
+type VeHolder @entity {
+  id: ID!
+  address: String!
+  updatedAt: BigInt!
+}

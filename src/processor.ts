@@ -329,11 +329,18 @@ const processor = new SubstrateBatchProcessor()
                         case VE_TOKEN_ADDRESS.toLowerCase():
                             switch (item.event.args.topics[0]) {
                                 case VotingEscrow.events['Deposit(address,uint256,uint256,int128,uint256)'].topic:
-                                    await VotingEscrowHandlers.handleDeposit({
-                                        ...ctx,
-                                        block: block.header,
-                                        event: item.event,
-                                    })
+                                    await Promise.all([
+                                        VotingEscrowHandlers.handleDeposit({
+                                            ...ctx,
+                                            block: block.header,
+                                            event: item.event,
+                                        }),
+                                        VotingEscrowHandlers.updateVeHolder({
+                                            ...ctx,
+                                            block: block.header,
+                                            event: item.event,
+                                        }),
+                                    ])
                                     break
                             }
                             break

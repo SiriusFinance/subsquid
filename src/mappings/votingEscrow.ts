@@ -1,6 +1,6 @@
 import { decodeHex, EvmLogHandlerContext } from '@subsquid/substrate-processor'
 import { Store } from '@subsquid/typeorm-store'
-import { Lock, LockSystemInfo } from '../model'
+import { Lock, LockSystemInfo, VeHolder } from '../model'
 
 import * as VotingEscrow from '../abi/VotingEscrow'
 import {toSeconds} from '../entities/system'
@@ -60,4 +60,18 @@ export async function getOrCreateLock(ctx: EvmLogHandlerContext<Store>, address:
     }
 
     return lock
+}
+
+export async function updateVeHolder(ctx: EvmLogHandlerContext<Store>): Promise<void> {
+    const event = VotingEscrow.events['Deposit(address,uint256,uint256,int128,uint256)'].decode(ctx.event.args)
+    const userAddress = event.provider
+    let user = await ctx.store.get(VeHolder, userAddress)
+    if (user == null) {
+        user = new VeHolder({
+            id: userAddress,
+            address: userAddress,
+            updatedAt: BigInt(+new Date()).valueOf(),
+        })
+        await ctx.store.save(user)
+    }
 }
