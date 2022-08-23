@@ -31,6 +31,20 @@ const WETH_META_DEPOSIT = '0x2d5Da7c463B3E8f4CF1AF08a1aA0a5DB9BB644F7'
 const WBNB_META_DEPOSIT = '0xC9d4f937Fa8e0193b46817a41435a262867ff090'
 const VE_TOKEN_ADDRESS = '0xc9D383f1e6E5270D77ad8e198729e237b60b6397'
 
+// for pkex
+import * as PoolsABI from './abi/Pools'
+import * as PoolsTierABI from './abi/PoolsTier'
+import * as FarmsABI from './abi/Farms'
+import * as pkexStake from './mappings/pkexStake'
+// pkex pools
+const PKEX_PKEX_DEPOSIT = '0xC8f9d27B4e5E9c956c7344C87D2eF05381D89Fc9'
+const PKEX_PKEX2_DEPOSIT = '0x81e92630B409Fc1A593853B1f35115C7d7E6F0bc'
+// pkex farms
+const ASTR_PKEX_STAKE = '0x9F519083A069Cee2585cB4931C77C6EA21c3517E'
+const ASTR_USDC_STAKE = '0x228a56F238F5441B1469B3bc6F64ddd362a3a0AF'
+const USDC_USDT_STAKE = '0x367545a43B89A81d1a3816F13505cC7bB840c1f6'
+const PKEX_DOT_STAKE = '0x6B44EF63fe77C56478a191bC1673E24e0408a780'
+
 const database = new TypeormDatabase()
 const processor = new SubstrateBatchProcessor()
     .setBatchSize(100)
@@ -168,6 +182,30 @@ const processor = new SubstrateBatchProcessor()
     .addEvmLog(WBNB_META_DEPOSIT.toLowerCase(), {
         filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
         range: { from: 1138838 },
+    })
+    .addEvmLog(PKEX_PKEX_DEPOSIT.toLowerCase(), {
+        filter: [[PoolsABI.events['Stake(address,uint256)'].topic]],
+        range: { from: 251038 },
+    })
+    .addEvmLog(PKEX_PKEX2_DEPOSIT.toLowerCase(), {
+        filter: [[PoolsTierABI.events['Stake(address,uint256)'].topic]],
+        range: { from: 385556 },
+    })
+    .addEvmLog(ASTR_PKEX_STAKE.toLowerCase(), {
+        filter: [[FarmsABI.events['Staked(address,uint256,uint256,uint256)'].topic]],
+        range: { from: 250937 },
+    })
+    .addEvmLog(ASTR_USDC_STAKE.toLowerCase(), {
+        filter: [[FarmsABI.events['Staked(address,uint256,uint256,uint256)'].topic]],
+        range: { from: 250947 },
+    })
+    .addEvmLog(USDC_USDT_STAKE.toLowerCase(), {
+        filter: [[FarmsABI.events['Staked(address,uint256,uint256,uint256)'].topic]],
+        range: { from: 250976 },
+    })
+    .addEvmLog(PKEX_DOT_STAKE.toLowerCase(), {
+        filter: [[FarmsABI.events['Staked(address,uint256,uint256,uint256)'].topic]],
+        range: { from: 1155918 },
     })
     .run(database, async (ctx) => {
         for (const block of ctx.blocks) {
@@ -353,6 +391,42 @@ const processor = new SubstrateBatchProcessor()
                                     'TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'
                                 ].topic:
                                     await XSwapDepositHandlers.handleTokenSwap({
+                                        ...ctx,
+                                        block: block.header,
+                                        event: item.event,
+                                    })
+                                    break
+                            }
+                            break
+                        case PKEX_PKEX_DEPOSIT.toLowerCase():
+                            switch (item.event.args.topics[0]) {
+                                case PoolsABI.events['Stake(address,uint256)'].topic:
+                                    await pkexStake.handlePoolDeposit({
+                                        ...ctx,
+                                        block: block.header,
+                                        event: item.event,
+                                    })
+                                    break
+                            }
+                            break
+                        case PKEX_PKEX2_DEPOSIT.toLowerCase():
+                            switch (item.event.args.topics[0]) {
+                                case PoolsTierABI.events['Stake(address,uint256)'].topic:
+                                    await pkexStake.handlePoolTierDeposit({
+                                        ...ctx,
+                                        block: block.header,
+                                        event: item.event,
+                                    })
+                                    break
+                            }
+                            break
+                        case ASTR_PKEX_STAKE.toLowerCase():
+                        case ASTR_USDC_STAKE.toLowerCase():
+                        case USDC_USDT_STAKE.toLowerCase():
+                        case PKEX_DOT_STAKE.toLowerCase():
+                            switch (item.event.args.topics[0]) {
+                                case FarmsABI.events['Staked(address,uint256,uint256,uint256)'].topic:
+                                    await pkexStake.handleFarmStake({
                                         ...ctx,
                                         block: block.header,
                                         event: item.event,

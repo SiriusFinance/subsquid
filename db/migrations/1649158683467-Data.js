@@ -17,6 +17,7 @@ module.exports = class Data1649158683467 {
     await db.query(`ALTER TABLE "token" ADD CONSTRAINT "FK_77fa31a311c711698a0b9443823" FOREIGN KEY ("owner_id") REFERENCES "owner"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "token" ADD CONSTRAINT "FK_5c85dbbd108d915a13f71de39ad" FOREIGN KEY ("contract_id") REFERENCES "contract"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`CREATE TABLE "ve_holder" ("id" character varying NOT NULL, "address" text NOT NULL, "updated_at" numeric NOT NULL, CONSTRAINT "PK_82fae97f905930df5d62a702fd0" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE TABLE "pkex_stake_acct" ("id" character varying NOT NULL, "address" text NOT NULL, "last_action_time" numeric NOT NULL, CONSTRAINT "PK_82fae97f905930df5d62a702fd1" PRIMARY KEY ("id"))`)
   }
 
   async down(db) {
@@ -35,5 +36,6 @@ module.exports = class Data1649158683467 {
     await db.query(`ALTER TABLE "token" DROP CONSTRAINT "FK_77fa31a311c711698a0b9443823"`)
     await db.query(`ALTER TABLE "token" DROP CONSTRAINT "FK_5c85dbbd108d915a13f71de39ad"`)
     await db.query(`DROP TABLE "ve_holder"`)
+    await db.query(`DROP TABLE "pkex_stake_acct"`)
   }
 }

@@ -265,3 +265,9 @@ type VeHolder @entity {
   address: String!
   updatedAt: BigInt!
 }
+
+type PkexStakeAcct @entity {
+  id: ID!
+  address: String!
+  lastActionTime: BigInt!
+}
