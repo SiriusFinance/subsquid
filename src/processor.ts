@@ -16,9 +16,14 @@ import * as VotingEscrow from './abi/VotingEscrow'
 import * as MetaSwapHandlers from './mappings/metaSwap'
 import * as SwapNormalHandlers from './mappings/swapNormal'
 import * as VotingEscrowHandlers from './mappings/votingEscrow'
-import { handleNewWithdrawFee } from './mappings/swapNormal'
 
-const Sirius4Pool = '0x417E9d065ee22DFB7CC6C63C403600E27627F333'
+const SRS4_SWAP = '0x417E9d065ee22DFB7CC6C63C403600E27627F333'
+const LAY4_SWAP = '0x0fB8C4eB33A30eBb01588e3110968430E3E69D58'
+const NASTR_SWAP = '0xEEa640c27620D7C448AD655B6e3FB94853AC01e3'
+const AVAULT_SWAP = '0xD8Bc543273B0E19eed34a295614963720c89f9e4'
+const BAI_META_SWAP = '0x290c7577D209c2d8DB06F377af31318cE31938fB'
+const OUSD_META_SWAP = '0xD18AbE9bcedeb5A9a65439e604b0BE8db0bdB176'
+const VE_TOKEN_ADDRESS = '0xc9D383f1e6E5270D77ad8e198729e237b60b6397'
 
 const database = new TypeormDatabase()
 const processor = new SubstrateBatchProcessor()
@@ -29,7 +34,7 @@ const processor = new SubstrateBatchProcessor()
     })
 
     // Sirius4Pool
-    .addEvmLog('0x417E9d065ee22DFB7CC6C63C403600E27627F333'.toLowerCase(), {
+    .addEvmLog(SRS4_SWAP.toLowerCase(), {
         filter: [
             [
                 SwapNormal.events['NewAdminFee(uint256)'].topic,
@@ -44,12 +49,10 @@ const processor = new SubstrateBatchProcessor()
                 SwapNormal.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].topic,
             ],
         ],
-        range: {
-            from: 815000,
-        },
+        range: { from: 815000 },
     })
     // Starlay4Pool
-    .addEvmLog('0x0fB8C4eB33A30eBb01588e3110968430E3E69D58'.toLowerCase(), {
+    .addEvmLog(LAY4_SWAP.toLowerCase(), {
         filter: [
             [
                 SwapNormal.events['NewAdminFee(uint256)'].topic,
@@ -64,12 +67,10 @@ const processor = new SubstrateBatchProcessor()
                 SwapNormal.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].topic,
             ],
         ],
-        range: {
-            from: 1049234,
-        },
+        range: { from: 1049234 },
     })
     // nastrPool
-    .addEvmLog('0xEEa640c27620D7C448AD655B6e3FB94853AC01e3'.toLowerCase(), {
+    .addEvmLog(NASTR_SWAP.toLowerCase(), {
         filter: [
             [
                 SwapNormal.events['NewAdminFee(uint256)'].topic,
@@ -84,12 +85,28 @@ const processor = new SubstrateBatchProcessor()
                 SwapNormal.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].topic,
             ],
         ],
-        range: {
-            from: 1501293,
-        },
+        range: { from: 1501293 },
+    })
+    // Avault4Pool
+    .addEvmLog(AVAULT_SWAP.toLowerCase(), {
+        filter: [
+            [
+                SwapNormal.events['NewAdminFee(uint256)'].topic,
+                SwapNormal.events['NewSwapFee(uint256)'].topic,
+                SwapNormal.events['NewWithdrawFee(uint256)'].topic,
+                SwapNormal.events['RampA(uint256,uint256,uint256,uint256)'].topic,
+                SwapNormal.events['StopRampA(uint256,uint256)'].topic,
+                SwapNormal.events['AddLiquidity(address,uint256[],uint256[],uint256,uint256)'].topic,
+                SwapNormal.events['RemoveLiquidity(address,uint256[],uint256)'].topic,
+                SwapNormal.events['RemoveLiquidityImbalance(address,uint256[],uint256[],uint256,uint256)'].topic,
+                SwapNormal.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)'].topic,
+                SwapNormal.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].topic,
+            ],
+        ],
+        range: { from: 1642199 },
     })
     // oUSDmetapool
-    .addEvmLog('0xD18AbE9bcedeb5A9a65439e604b0BE8db0bdB176'.toLowerCase(), {
+    .addEvmLog(OUSD_META_SWAP.toLowerCase(), {
         filter: [
             [
                 MetaSwap.events['NewAdminFee(uint256)'].topic,
@@ -104,12 +121,10 @@ const processor = new SubstrateBatchProcessor()
                 MetaSwap.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].topic,
             ],
         ],
-        range: {
-            from: 908500,
-        },
+        range: { from: 908500 },
     })
     // BAImetapool
-    .addEvmLog('0x290c7577D209c2d8DB06F377af31318cE31938fB'.toLowerCase(), {
+    .addEvmLog(BAI_META_SWAP.toLowerCase(), {
         filter: [
             [
                 MetaSwap.events['NewAdminFee(uint256)'].topic,
@@ -124,25 +139,22 @@ const processor = new SubstrateBatchProcessor()
                 MetaSwap.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].topic,
             ],
         ],
-        range: {
-            from: 914000,
-        },
+        range: { from: 914000 },
     })
     // VotingEscrow
-    .addEvmLog('0xc9D383f1e6E5270D77ad8e198729e237b60b6397'.toLowerCase(), {
+    .addEvmLog(VE_TOKEN_ADDRESS.toLowerCase(), {
         filter: [[VotingEscrow.events['Deposit(address,uint256,uint256,int128,uint256)'].topic]],
-        range: {
-            from: 815000,
-        },
+        range: { from: 815000 },
     })
     .run(database, async (ctx) => {
         for (const block of ctx.blocks) {
             for (const item of block.items) {
                 if (item.name === 'EVM.Log') {
                     switch (item.event.args.address) {
-                        case '0x417E9d065ee22DFB7CC6C63C403600E27627F333'.toLowerCase():
-                        case '0x0fB8C4eB33A30eBb01588e3110968430E3E69D58'.toLowerCase():
-                        case '0xEEa640c27620D7C448AD655B6e3FB94853AC01e3'.toLowerCase():
+                        case SRS4_SWAP.toLowerCase():
+                        case LAY4_SWAP.toLowerCase():
+                        case NASTR_SWAP.toLowerCase():
+                        case AVAULT_SWAP.toLowerCase():
                             switch (item.event.args.topics[0]) {
                                 case SwapNormal.events['NewAdminFee(uint256)'].topic:
                                     await SwapNormalHandlers.handleNewAdminFee({
@@ -220,8 +232,8 @@ const processor = new SubstrateBatchProcessor()
                                     break
                             }
                             break
-                        case '0xD18AbE9bcedeb5A9a65439e604b0BE8db0bdB176'.toLowerCase():
-                        case '0x290c7577D209c2d8DB06F377af31318cE31938fB'.toLowerCase():
+                        case OUSD_META_SWAP.toLowerCase():
+                        case BAI_META_SWAP.toLowerCase():
                             switch (item.event.args.topics[0]) {
                                 case MetaSwap.events['NewAdminFee(uint256)'].topic:
                                     await MetaSwapHandlers.handleNewAdminFee({
@@ -291,7 +303,7 @@ const processor = new SubstrateBatchProcessor()
                                     break
                             }
                             break
-                        case '0xc9D383f1e6E5270D77ad8e198729e237b60b6397'.toLowerCase():
+                        case VE_TOKEN_ADDRESS.toLowerCase():
                             switch (item.event.args.topics[0]) {
                                 case VotingEscrow.events['Deposit(address,uint256,uint256,int128,uint256)'].topic:
                                     return VotingEscrowHandlers.handleDeposit({
