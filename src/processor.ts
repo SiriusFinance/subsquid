@@ -19,17 +19,28 @@ import * as SwapNormalHandlers from './mappings/swapNormal'
 import * as VotingEscrowHandlers from './mappings/votingEscrow'
 import * as XSwapDepositHandlers from './mappings/xSwapDeposit'
 
-const SRS4_SWAP = '0x417E9d065ee22DFB7CC6C63C403600E27627F333'
-const LAY4_SWAP = '0x0fB8C4eB33A30eBb01588e3110968430E3E69D58'
-const NASTR_SWAP = '0xEEa640c27620D7C448AD655B6e3FB94853AC01e3'
-const AVAULT_SWAP = '0xD8Bc543273B0E19eed34a295614963720c89f9e4'
-const BAI_META_SWAP = '0x290c7577D209c2d8DB06F377af31318cE31938fB'
-const OUSD_META_SWAP = '0xD18AbE9bcedeb5A9a65439e604b0BE8db0bdB176'
-const JPYC_META_DEPOSIT = '0x3cd1Fa4EeeFdf6c30E66c66A474e8E4dd509f54c'
-const WBTC_META_DEPOSIT = '0xD25Cf814EeE54840A08Db8dfAbFE445B1DE37f0f'
-const WETH_META_DEPOSIT = '0x2d5Da7c463B3E8f4CF1AF08a1aA0a5DB9BB644F7'
-const WBNB_META_DEPOSIT = '0xC9d4f937Fa8e0193b46817a41435a262867ff090'
-const VE_TOKEN_ADDRESS = '0xc9D383f1e6E5270D77ad8e198729e237b60b6397'
+const SRS4_SWAP = '0x417E9d065ee22DFB7CC6C63C403600E27627F333'.toLowerCase()
+const LAY4_SWAP = '0x0fB8C4eB33A30eBb01588e3110968430E3E69D58'.toLowerCase()
+const NASTR_SWAP = '0xEEa640c27620D7C448AD655B6e3FB94853AC01e3'.toLowerCase()
+const AVAULT_SWAP = '0xD8Bc543273B0E19eed34a295614963720c89f9e4'.toLowerCase()
+const BAI_META_SWAP = '0x290c7577D209c2d8DB06F377af31318cE31938fB'.toLowerCase()
+const OUSD_META_SWAP = '0xD18AbE9bcedeb5A9a65439e604b0BE8db0bdB176'.toLowerCase()
+const VE_TOKEN_ADDRESS = '0xc9D383f1e6E5270D77ad8e198729e237b60b6397'.toLowerCase()
+
+const JPYC_META_DEPOSIT = '0x3cd1Fa4EeeFdf6c30E66c66A474e8E4dd509f54c'.toLowerCase()
+const WBTC_META_DEPOSIT = '0xD25Cf814EeE54840A08Db8dfAbFE445B1DE37f0f'.toLowerCase()
+const WETH_META_DEPOSIT = '0x2d5Da7c463B3E8f4CF1AF08a1aA0a5DB9BB644F7'.toLowerCase()
+const WBNB_META_DEPOSIT = '0xC9d4f937Fa8e0193b46817a41435a262867ff090'.toLowerCase()
+const JPYC_ADDRESS = '0x431d5dff03120afa4bdf332c61a6e1766ef37bdb'.toLowerCase()
+const WBTC_ADDRESS = '0xad543f18cff85c77e140e3e5e3c3392f6ba9d5ca'.toLowerCase()
+const WETH_ADDRESS = '0x81ecac0d6be0550a00ff064a4f9dd2400585fe9c'.toLowerCase()
+const WBNB_ADDRESS = '0x7f27352d5f83db87a5a3e00f4b07cc2138d8ee52'.toLowerCase()
+const POOL_ADDRESSES = {
+    [JPYC_META_DEPOSIT]: JPYC_ADDRESS,
+    [WBTC_META_DEPOSIT]: WBTC_ADDRESS,
+    [WETH_META_DEPOSIT]: WETH_ADDRESS,
+    [WBNB_META_DEPOSIT]: WBNB_ADDRESS,
+}
 
 const database = new TypeormDatabase()
 const processor = new SubstrateBatchProcessor().setBatchSize(100).setDataSource({
@@ -38,7 +49,7 @@ const processor = new SubstrateBatchProcessor().setBatchSize(100).setDataSource(
 })
 
 // Sirius4Pool
-processor.addEvmLog(SRS4_SWAP.toLowerCase(), {
+processor.addEvmLog(SRS4_SWAP, {
     filter: [
         [
             SwapNormal.events['NewAdminFee(uint256)'].topic,
@@ -56,7 +67,7 @@ processor.addEvmLog(SRS4_SWAP.toLowerCase(), {
     range: { from: 815000 },
 })
 // Starlay4Pool
-processor.addEvmLog(LAY4_SWAP.toLowerCase(), {
+processor.addEvmLog(LAY4_SWAP, {
     filter: [
         [
             SwapNormal.events['NewAdminFee(uint256)'].topic,
@@ -74,7 +85,7 @@ processor.addEvmLog(LAY4_SWAP.toLowerCase(), {
     range: { from: 1049234 },
 })
 // nastrPool
-processor.addEvmLog(NASTR_SWAP.toLowerCase(), {
+processor.addEvmLog(NASTR_SWAP, {
     filter: [
         [
             SwapNormal.events['NewAdminFee(uint256)'].topic,
@@ -92,7 +103,7 @@ processor.addEvmLog(NASTR_SWAP.toLowerCase(), {
     range: { from: 1501293 },
 })
 // Avault4Pool
-processor.addEvmLog(AVAULT_SWAP.toLowerCase(), {
+processor.addEvmLog(AVAULT_SWAP, {
     filter: [
         [
             SwapNormal.events['NewAdminFee(uint256)'].topic,
@@ -110,7 +121,7 @@ processor.addEvmLog(AVAULT_SWAP.toLowerCase(), {
     range: { from: 1642199 },
 })
 // oUSDmetapool
-processor.addEvmLog(OUSD_META_SWAP.toLowerCase(), {
+processor.addEvmLog(OUSD_META_SWAP, {
     filter: [
         [
             MetaSwap.events['NewAdminFee(uint256)'].topic,
@@ -128,7 +139,7 @@ processor.addEvmLog(OUSD_META_SWAP.toLowerCase(), {
     range: { from: 908500 },
 })
 // BAImetapool
-processor.addEvmLog(BAI_META_SWAP.toLowerCase(), {
+processor.addEvmLog(BAI_META_SWAP, {
     filter: [
         [
             MetaSwap.events['NewAdminFee(uint256)'].topic,
@@ -146,24 +157,24 @@ processor.addEvmLog(BAI_META_SWAP.toLowerCase(), {
     range: { from: 914000 },
 })
 // VotingEscrow
-processor.addEvmLog(VE_TOKEN_ADDRESS.toLowerCase(), {
+processor.addEvmLog(VE_TOKEN_ADDRESS, {
     filter: [[VotingEscrow.events['Deposit(address,uint256,uint256,int128,uint256)'].topic]],
     range: { from: 815000 },
 })
 // JPYC Metapool
-processor.addEvmLog(JPYC_META_DEPOSIT.toLowerCase(), {
+processor.addEvmLog(JPYC_META_DEPOSIT, {
     filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
     range: { from: 1099458 },
 })
-processor.addEvmLog(WBTC_META_DEPOSIT.toLowerCase(), {
+processor.addEvmLog(WBTC_META_DEPOSIT, {
     filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
     range: { from: 1138805 },
 })
-processor.addEvmLog(WETH_META_DEPOSIT.toLowerCase(), {
+processor.addEvmLog(WETH_META_DEPOSIT, {
     filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
     range: { from: 1138820 },
 })
-processor.addEvmLog(WBNB_META_DEPOSIT.toLowerCase(), {
+processor.addEvmLog(WBNB_META_DEPOSIT, {
     filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
     range: { from: 1138838 },
 })
@@ -174,10 +185,10 @@ processor.run(database, async (ctx: any) => {
             console.log(item)
             if (item.name === 'EVM.Log') {
                 switch (item.event.args.address) {
-                    case SRS4_SWAP.toLowerCase():
-                    case LAY4_SWAP.toLowerCase():
-                    case NASTR_SWAP.toLowerCase():
-                    case AVAULT_SWAP.toLowerCase():
+                    case SRS4_SWAP:
+                    case LAY4_SWAP:
+                    case NASTR_SWAP:
+                    case AVAULT_SWAP:
                         switch (item.event.args.topics[0]) {
                             case SwapNormal.events['NewAdminFee(uint256)'].topic:
                                 await SwapNormalHandlers.handleNewAdminFee({
@@ -253,8 +264,8 @@ processor.run(database, async (ctx: any) => {
                                 break
                         }
                         break
-                    case OUSD_META_SWAP.toLowerCase():
-                    case BAI_META_SWAP.toLowerCase():
+                    case OUSD_META_SWAP:
+                    case BAI_META_SWAP:
                         switch (item.event.args.topics[0]) {
                             case MetaSwap.events['NewAdminFee(uint256)'].topic:
                                 await MetaSwapHandlers.handleNewAdminFee({
@@ -323,7 +334,7 @@ processor.run(database, async (ctx: any) => {
                                 break
                         }
                         break
-                    case VE_TOKEN_ADDRESS.toLowerCase():
+                    case VE_TOKEN_ADDRESS:
                         switch (item.event.args.topics[0]) {
                             case VotingEscrow.events['Deposit(address,uint256,uint256,int128,uint256)'].topic:
                                 await Promise.all([
@@ -341,18 +352,21 @@ processor.run(database, async (ctx: any) => {
                                 break
                         }
                         break
-                    case JPYC_META_DEPOSIT.toLowerCase():
-                    case WBTC_META_DEPOSIT.toLowerCase():
-                    case WETH_META_DEPOSIT.toLowerCase():
-                    case WBNB_META_DEPOSIT.toLowerCase():
+                    case JPYC_META_DEPOSIT:
+                    case WBTC_META_DEPOSIT:
+                    case WETH_META_DEPOSIT:
+                    case WBNB_META_DEPOSIT:
                         switch (item.event.args.topics[0]) {
                             case XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)']
                                 .topic:
-                                await XSwapDepositHandlers.handleTokenSwap({
-                                    ...ctx,
-                                    block: block.header,
-                                    event: item.event,
-                                })
+                                await XSwapDepositHandlers.handleTokenSwap(
+                                    {
+                                        ...ctx,
+                                        block: block.header,
+                                        event: item.event,
+                                    },
+                                    { poolAddress: POOL_ADDRESSES[item.event.args.address] }
+                                )
                                 break
                         }
                         break
