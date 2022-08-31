@@ -182,7 +182,7 @@ processor.addEvmLog(WBNB_META_DEPOSIT, {
 processor.run(database, async (ctx: any) => {
     for (const block of ctx.blocks) {
         for (const item of block.items as any) {
-            console.log(item)
+            // console.log(item)
             if (item.name === 'EVM.Log') {
                 switch (item.event.args.address) {
                     case SRS4_SWAP:
