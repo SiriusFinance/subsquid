@@ -45,7 +45,7 @@ const POOL_ADDRESSES = {
 const database = new TypeormDatabase()
 const processor = new SubstrateBatchProcessor().setBatchSize(100).setDataSource({
     archive: lookupArchive('astar', { release: 'FireSquid' }),
-    chain: 'wss://rpc.pinknode.io/astar/6e3fa591-e24f-483a-95fa-1d773f7f2be3',
+    chain: 'wss://rpc.astar.network',
 })
 
 // Sirius4Pool
