@@ -181,14 +181,16 @@ processor.run(database, async (ctx) => {
                     block: block.header,
                     event: item.event,
                 }
-                const measureKey = `${item.event.args.address.substr(-4)}-${item.event.args.topics[0]}`
+                const topic = item.event.args.topics[0]
+                // blockHeight - pool - event
+                const measureKey = `${block.header.height}-${item.event.args.address.substr(-6)}-${topic.substr(-6)}`
                 console.time(measureKey)
                 switch (item.event.args.address) {
                     case SRS4_SWAP:
                     case LAY4_SWAP:
                     case NASTR_SWAP:
                     case AVAULT_SWAP:
-                        switch (item.event.args.topics[0]) {
+                        switch (topic) {
                             case SwapNormal.events['NewAdminFee(uint256)'].topic:
                                 await SwapNormalHandlers.handleNewAdminFee(evmCtx)
                                 break
