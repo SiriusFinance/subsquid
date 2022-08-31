@@ -1,15 +1,6 @@
 import { lookupArchive } from '@subsquid/archive-registry'
-import { Store, TypeormDatabase } from '@subsquid/typeorm-store'
-import {
-    BatchContext,
-    BatchProcessorItem,
-    EvmLogEvent,
-    SubstrateBatchProcessor,
-    SubstrateBlock,
-    SubstrateProcessor,
-} from '@subsquid/substrate-processor'
-import { In } from 'typeorm'
-import { ethers } from 'ethers'
+import { TypeormDatabase } from '@subsquid/typeorm-store'
+import { BatchBlock, SubstrateBatchProcessor } from '@subsquid/substrate-processor'
 import * as SwapNormal from './abi/SwapNormal'
 import * as MetaSwap from './abi/SwapNormal'
 import * as VotingEscrow from './abi/VotingEscrow'
@@ -18,6 +9,7 @@ import * as MetaSwapHandlers from './mappings/metaSwap'
 import * as SwapNormalHandlers from './mappings/swapNormal'
 import * as VotingEscrowHandlers from './mappings/votingEscrow'
 import * as XSwapDepositHandlers from './mappings/xSwapDeposit'
+import { Item } from '@subsquid/ss58'
 
 const SRS4_SWAP = '0x417E9d065ee22DFB7CC6C63C403600E27627F333'.toLowerCase()
 const LAY4_SWAP = '0x0fB8C4eB33A30eBb01588e3110968430E3E69D58'.toLowerCase()
@@ -179,9 +171,9 @@ processor.addEvmLog(WBNB_META_DEPOSIT, {
     range: { from: 1138838 },
 })
 
-processor.run(database, async (ctx: any) => {
+processor.run(database, async (ctx) => {
     for (const block of ctx.blocks) {
-        for (const item of block.items as any) {
+        for (const item of block.items as unknown as Array<BatchBlock<Item> & { name: string; event: any }>) {
             // console.log(item)
             if (item.name === 'EVM.Log') {
                 const evmCtx = {
@@ -189,7 +181,8 @@ processor.run(database, async (ctx: any) => {
                     block: block.header,
                     event: item.event,
                 }
-                console.time(item.event.args.address)
+                const measureKey = `${item.event.args.address.substr(-4)}-${item.event.args.topics[0]}`
+                console.time(measureKey)
                 switch (item.event.args.address) {
                     case SRS4_SWAP:
                     case LAY4_SWAP:
@@ -286,7 +279,7 @@ processor.run(database, async (ctx: any) => {
                         }
                         break
                 }
-                console.timeEnd(item.event.args.address)
+                console.timeEnd(measureKey)
             }
         }
     }
