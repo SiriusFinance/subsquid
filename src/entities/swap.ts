@@ -11,6 +11,7 @@ import { decodeHex, EvmLogHandlerContext, toHex } from '@subsquid/substrate-proc
 import * as SwapNormal from '../abi/SwapNormal'
 import * as MetaSwap from '../abi/MetaSwap'
 import * as XSwapDeposit from '../abi/XSwapDeposit'
+import * as XSwap from '../abi/XSwap'
 import * as ERC20 from '../abi/ERC20'
 
 import { Big as BigDecimal } from 'big.js'
@@ -371,18 +372,13 @@ export async function getXSwapInfo(ctx: EvmLogHandlerContext<Store>, swap: strin
     }
 }
 
-export async function getBalancesXSwap(
-    ctx: EvmLogHandlerContext<Store>,
-    swap: string,
-    N_COINS: number
-): Promise<bigint[]> {
-    let swapContract = new XSwapDeposit.Contract(ctx, swap)
-    let balances: bigint[] = new Array(N_COINS)
+export async function getBalancesXSwap(ctx: EvmLogHandlerContext<Store>, swap: string): Promise<bigint[]> {
+    let swapDepositContract = new XSwapDeposit.Contract(ctx, swap)
+    let swapContract = new XSwap.Contract(ctx, await swapDepositContract.META_POOL())
+    let balances: bigint[] = new Array(2)
 
-    for (let i = 0; i < N_COINS; ++i) {
-        let t = await swapContract.UNDERLYING_COINS(BigNumber.from(i))
-        let tokenContract = new ERC20.Contract(ctx, t)
-        balances[i] = (await tokenContract.balanceOf(swap)).toBigInt()
+    for (let i = 0; i < 2; ++i) {
+        balances[i] = (await swapContract.balances(BigNumber.from(i))).toBigInt()
     }
 
     return balances
