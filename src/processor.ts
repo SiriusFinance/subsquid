@@ -275,7 +275,7 @@ processor.run(database, async (ctx) => {
                             case XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)']
                                 .topic:
                                 await XSwapDepositHandlers.handleTokenSwap(evmCtx, {
-                                    poolAddress: POOL_ADDRESSES[item.event.args.address],
+                                    metaTokenAddress: POOL_ADDRESSES[item.event.args.address],
                                 })
                                 break
                         }

@@ -10,6 +10,7 @@ import { decodeHex, EvmLogHandlerContext, toHex } from '@subsquid/substrate-proc
 
 import * as SwapNormal from '../abi/SwapNormal'
 import * as MetaSwap from '../abi/MetaSwap'
+import * as XSwap from '../abi/XSwap'
 import * as XSwapDeposit from '../abi/XSwapDeposit'
 import * as ERC20 from '../abi/ERC20'
 
@@ -35,6 +36,10 @@ interface SwapInfo {
     virtualPrice: bigint
     owner: string
     lpToken: string
+}
+
+interface XSwapInfo extends SwapInfo {
+    metaSwapAddress: string
 }
 
 export async function getOrCreateSwap(ctx: EvmLogHandlerContext<Store>, address: string): Promise<Swap> {
@@ -273,6 +278,7 @@ export async function getOrCreateXSwap(ctx: EvmLogHandlerContext<Store>, address
         swap = new Swap({ id: address })
         swap.address = decodeHex(address)
         swap.baseSwapAddress = decodeHex(info.baseSwapAddress)
+        swap.metaSwapAddress = decodeHex(info.metaSwapAddress)
         swap.numTokens = info.tokens.length
         swap.tokens = (await registerTokens(ctx, info.tokens)).map((t) => new TokenObject(t))
         swap.baseTokens = (await registerTokens(ctx, info.baseTokens)).map((t) => new TokenObject(t))
@@ -303,7 +309,7 @@ export async function getOrCreateXSwap(ctx: EvmLogHandlerContext<Store>, address
 }
 
 // Gets poll info from swap contract
-export async function getXSwapInfo(ctx: EvmLogHandlerContext<Store>, swap: string): Promise<SwapInfo> {
+export async function getXSwapInfo(ctx: EvmLogHandlerContext<Store>, swap: string): Promise<XSwapInfo> {
     let swapContract = new XSwapDeposit.Contract(ctx, swap)
 
     let tokens: string[] = []
@@ -335,6 +341,8 @@ export async function getXSwapInfo(ctx: EvmLogHandlerContext<Store>, swap: strin
     // get the lp token bounded basepool tokens
     let baseSwapAddress = await swapContract.BASE_POOL()
     let baseSwapContract = new SwapNormal.Contract(ctx, baseSwapAddress)
+
+    let metaSwapAddress = await swapContract.META_POOL()
 
     let j = 0
 
@@ -368,21 +376,23 @@ export async function getXSwapInfo(ctx: EvmLogHandlerContext<Store>, swap: strin
         virtualPrice: (await swapContract.priceOracle()).toBigInt(),
         owner: await swapContract.owner(),
         lpToken: await swapContract.META_LPTOKEN(),
+        metaSwapAddress,
     }
 }
 
-export async function getBalancesXSwap(
-    ctx: EvmLogHandlerContext<Store>,
-    swap: string,
-    N_COINS: number
-): Promise<bigint[]> {
-    let swapContract = new XSwapDeposit.Contract(ctx, swap)
-    let balances: bigint[] = new Array(N_COINS)
+export async function getBalancesXSwap(ctx: EvmLogHandlerContext<Store>, swap: string): Promise<bigint[]> {
+    let swapInfo = await getOrCreateXSwap(ctx, swap)
+    let swapDepositContract = new XSwapDeposit.Contract(ctx, swap)
+    let swapContract
+    if (!swapInfo.metaSwapAddress) {
+        swapInfo.metaSwapAddress = decodeHex(await swapDepositContract.META_POOL())
+        await ctx.store.save(swapInfo)
+    }
+    swapContract = new XSwap.Contract(ctx, toHex(swapInfo.metaSwapAddress!))
+    let balances: bigint[] = new Array(2)
 
-    for (let i = 0; i < N_COINS; ++i) {
-        let t = await swapContract.UNDERLYING_COINS(BigNumber.from(i))
-        let tokenContract = new ERC20.Contract(ctx, t)
-        balances[i] = (await tokenContract.balanceOf(swap)).toBigInt()
+    for (let i = 0; i < 2; ++i) {
+        balances[i] = await (await swapContract.balances(BigNumber.from(i))).toBigInt()
     }
 
     return balances

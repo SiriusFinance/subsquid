@@ -1,0 +1,52 @@
+==========================================
+SwapNormal
+==========================================
+f222a2 => AddLiquidity
+d35f38 => NewAdminFee
+afdfe5 => NewSwapFee
+e03f1d => NewWithdrawFee
+6457e0 => OwnershipTransferred
+05a258 => Paused
+83c254 => RampA
+d58cef => RemoveLiquidity
+af1755 => RemoveLiquidityImbalance
+7a8a64 => RemoveLiquidityOne
+201938 => StopRampA
+7f8a38 => TokenSwap
+b073aa => Unpaused
+
+==========================================
+MetaSwap
+==========================================
+f222a2 => AddLiquidity
+d35f38 => NewAdminFee
+afdfe5 => NewSwapFee
+e03f1d => NewWithdrawFee
+6457e0 => OwnershipTransferred
+05a258 => Paused
+83c254 => RampA
+d58cef => RemoveLiquidity
+af1755 => RemoveLiquidityImbalance
+7a8a64 => RemoveLiquidityOne
+201938 => StopRampA
+7f8a38 => TokenSwap
+b073aa => Unpaused
+
+==========================================
+VotingEscrow
+==========================================
+730d59 => Deposit
+6457e0 => OwnershipTransferred
+cc2f5c => Supply
+11b568 => Withdraw
+
+==========================================
+XSwapDeposit
+==========================================
+3c7eb2 => AddLiquidity
+6457e0 => OwnershipTransferred
+05a258 => Paused
+b4f87c => RemoveLiquidity
+7a8a64 => RemoveLiquidityOne
+4c0c23 => TokenExchange
+b073aa => Unpaused

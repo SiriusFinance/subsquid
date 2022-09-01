@@ -3,6 +3,7 @@ import {
     Exchange,
     RemoveLiquidityEventData,
     StopRampAEventData,
+    Swap,
     SwapEvent,
     TokenExchangeData,
 } from '../model'
@@ -17,37 +18,24 @@ import { Store } from '@subsquid/typeorm-store'
 import { Big as BigDecimal } from 'big.js'
 
 import * as XSwapDeposit from '../abi/XSwapDeposit'
+import * as XSwap from '../abi/XSwap'
+import { BigNumber } from 'ethers'
 
 type Opts = {
-    poolAddress: string
+    metaTokenAddress: string
 }
 
-export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>, { poolAddress }: Opts): Promise<void> {
+export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>, { metaTokenAddress }: Opts): Promise<void> {
     let swap = await getOrCreateXSwap(ctx, ctx.event.args.address)
-    let balances = await getBalancesXSwap(ctx, ctx.event.args.address, swap.numTokens)
+    let balances = await getBalancesXSwap(ctx, ctx.event.args.address)
 
-    const event = XSwapDeposit.events['AddLiquidity(address,uint256[],uint256,uint256,uint256)'].decode(
-        ctx.event.args
-    )
+    const event = XSwapDeposit.events['AddLiquidity(address,uint256[],uint256,uint256,uint256)'].decode(ctx.event.args)
 
     let price = event.price
     swap.balances = balances
 
     // update TVL
-    let tokens = swap.tokens
-    let tvl: BigDecimal = BigDecimal('0')
-    for (let i = 0; i < swap.tokens.length; i++) {
-        let token = await getOrCreateToken(ctx, toHex(tokens[i].address))
-        if (token !== null) {
-            let balance: BigInt = balances[i]
-            let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            if (toHex(tokens[i].address) == poolAddress) {
-                tvl = tvl.plus(balanceDecimal.times(1e18).div(BigDecimal(price.toString())))
-            } else {
-                tvl = tvl.plus(balanceDecimal)
-            }
-        }
-    }
+    let tvl: BigDecimal = await updateTVL(swap, ctx, balances, metaTokenAddress, price.toBigInt())
     swap.tvl = tvl.toFixed()
 
     let dailyTvl = await getDailyPoolTvl(ctx, swap, BigInt(toSeconds(ctx.block.timestamp)))
@@ -85,9 +73,12 @@ export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>, { poo
     await ctx.store.save(log)
 }
 
-export async function handleRemoveLiquidity(ctx: EvmLogHandlerContext<Store>, { poolAddress }: Opts): Promise<void> {
+export async function handleRemoveLiquidity(
+    ctx: EvmLogHandlerContext<Store>,
+    { metaTokenAddress }: Opts
+): Promise<void> {
     let swap = await getOrCreateXSwap(ctx, ctx.event.args.address)
-    let balances = await getBalancesXSwap(ctx, ctx.event.args.address, swap.numTokens)
+    let balances = await getBalancesXSwap(ctx, ctx.event.args.address)
 
     const event = XSwapDeposit.events['RemoveLiquidity(address,uint256[2],uint256,uint256)'].decode(ctx.event.args)
 
@@ -95,20 +86,7 @@ export async function handleRemoveLiquidity(ctx: EvmLogHandlerContext<Store>, { 
     swap.balances = balances
 
     // update TVL
-    let tokens = swap.tokens
-    let tvl: BigDecimal = BigDecimal('0')
-    for (let i = 0; i < swap.tokens.length; i++) {
-        let token = await getOrCreateToken(ctx, toHex(tokens[i].address))
-        if (token !== null) {
-            let balance: BigInt = balances[i]
-            let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            if (toHex(tokens[i].address) == poolAddress) {
-                tvl = tvl.plus(balanceDecimal.times(1e18).div(BigDecimal(price.toString())))
-            } else {
-                tvl = tvl.plus(balanceDecimal)
-            }
-        }
-    }
+    let tvl: BigDecimal = await updateTVL(swap, ctx, balances, metaTokenAddress, price.toBigInt())
     swap.tvl = tvl.toFixed()
 
     let dailyTvl = await getDailyPoolTvl(ctx, swap, BigInt(toSeconds(ctx.block.timestamp)))
@@ -144,9 +122,39 @@ export async function handleRemoveLiquidity(ctx: EvmLogHandlerContext<Store>, { 
     await ctx.store.save(log)
 }
 
-export async function handleRemoveLiquidityOne(ctx: EvmLogHandlerContext<Store>, { poolAddress }: Opts): Promise<void> {
+async function updateTVL(
+    swap: Swap,
+    ctx: EvmLogHandlerContext<Store, { event: true }>,
+    balances: bigint[],
+    metaTokenAddress: string,
+    price: BigInt
+) {
+    let swapDepositContract = new XSwapDeposit.Contract(ctx, toHex(swap.address))
+    let swapContract = new XSwap.Contract(ctx, await swapDepositContract.META_POOL())
+    let tokenAddresses = [await swapContract.coins(BigNumber.from(0)), await swapContract.coins(BigNumber.from(1))]
+
+    let tvl: BigDecimal = BigDecimal('0')
+    for (let i = 0; i < 2; i++) {
+        let token = await getOrCreateToken(ctx, tokenAddresses[i])
+        if (token !== null) {
+            let balance: BigInt = balances[i]
+            let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
+            if (tokenAddresses[i] == metaTokenAddress) {
+                tvl = tvl.plus(balanceDecimal.times(1e18).div(BigDecimal(price.toString())))
+            } else {
+                tvl = tvl.plus(balanceDecimal)
+            }
+        }
+    }
+    return tvl
+}
+
+export async function handleRemoveLiquidityOne(
+    ctx: EvmLogHandlerContext<Store>,
+    { metaTokenAddress }: Opts
+): Promise<void> {
     let swap = await getOrCreateXSwap(ctx, ctx.event.args.address)
-    let balances = await getBalancesXSwap(ctx, ctx.event.args.address, swap.numTokens)
+    let balances = await getBalancesXSwap(ctx, ctx.event.args.address)
 
     const event = XSwapDeposit.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)'].decode(
         ctx.event.args
@@ -156,20 +164,7 @@ export async function handleRemoveLiquidityOne(ctx: EvmLogHandlerContext<Store>,
     swap.balances = balances
 
     // update TVL
-    let tokens = swap.tokens
-    let tvl: BigDecimal = BigDecimal('0')
-    for (let i = 0; i < swap.tokens.length; i++) {
-        let token = await getOrCreateToken(ctx, toHex(tokens[i].address))
-        if (token !== null) {
-            let balance: BigInt = balances[i]
-            let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            if (toHex(tokens[i].address) == poolAddress) {
-                tvl = tvl.plus(balanceDecimal.times(1e18).div(BigDecimal(price.toString())))
-            } else {
-                tvl = tvl.plus(balanceDecimal)
-            }
-        }
-    }
+    let tvl: BigDecimal = await updateTVL(swap, ctx, balances, metaTokenAddress, price.toBigInt())
     swap.tvl = tvl.toFixed()
 
     let dailyTvl = await getDailyPoolTvl(ctx, swap, BigInt(toSeconds(ctx.block.timestamp)))
@@ -214,9 +209,9 @@ export async function handleRemoveLiquidityOne(ctx: EvmLogHandlerContext<Store>,
     await ctx.store.save(log)
 }
 
-export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>, { poolAddress }: Opts): Promise<void> {
+export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>, { metaTokenAddress }: Opts): Promise<void> {
     let swap = await getOrCreateXSwap(ctx, ctx.event.args.address)
-    let balances = await getBalancesXSwap(ctx, ctx.event.args.address, swap.numTokens)
+    let balances = await getBalancesXSwap(ctx, ctx.event.args.address)
 
     const event = XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].decode(
         ctx.event.args
@@ -249,13 +244,13 @@ export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>, { poolAd
         if (event.soldId.toNumber() < tokens.length && event.boughtId.toNumber() < tokens.length) {
             let soldToken = await getOrCreateToken(ctx, toHex(tokens[event.soldId.toNumber()].address))
             let sellVolume = BigDecimal(event.tokensSold.toString()).div(Math.pow(10, Number(soldToken.decimals)))
-            if (toHex(tokens[event.soldId.toNumber()].address) == poolAddress) {
+            if (toHex(tokens[event.soldId.toNumber()].address) == metaTokenAddress) {
                 sellVolume = sellVolume.times(1e18).div(new BigDecimal(price.toString()))
             }
 
             let boughtToken = await getOrCreateToken(ctx, toHex(tokens[event.boughtId.toNumber()].address))
             let buyVolume = BigDecimal(event.tokensBought.toString()).div(Math.pow(10, Number(boughtToken.decimals)))
-            if (toHex(tokens[event.boughtId.toNumber()].address) == poolAddress) {
+            if (toHex(tokens[event.boughtId.toNumber()].address) == metaTokenAddress) {
                 buyVolume = buyVolume.times(1e18).div(new BigDecimal(price.toString()))
             }
 
@@ -274,19 +269,7 @@ export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>, { poolAd
             await ctx.store.save(weeklyVolume)
 
             // update TVL
-            let tvl: BigDecimal = BigDecimal('0')
-            for (let i = 0; i < swap.tokens.length; i++) {
-                let token = await getOrCreateToken(ctx, toHex(tokens[i].address))
-                if (token !== null) {
-                    let balance: BigInt = balances[i]
-                    let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-                    if (toHex(tokens[event.boughtId.toNumber()].address) == poolAddress) {
-                        tvl = tvl.plus(balanceDecimal.times(1e18).div(BigDecimal(price.toString())))
-                    } else {
-                        tvl = tvl.plus(balanceDecimal)
-                    }
-                }
-            }
+            let tvl: BigDecimal = await updateTVL(swap, ctx, balances, metaTokenAddress, price.toBigInt())
             swap.tvl = tvl.toFixed()
 
             let dailyTvl = await getDailyPoolTvl(ctx, swap, BigInt(toSeconds(ctx.block.timestamp)))
