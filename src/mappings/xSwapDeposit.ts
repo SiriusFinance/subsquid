@@ -42,7 +42,7 @@ export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>, { poo
             let balance: BigInt = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
             if (toHex(tokens[i].address) == poolAddress) {
-                tvl = tvl.plus(balanceDecimal.times(BigDecimal(price.toString())).div(1e18))
+                tvl = tvl.plus(balanceDecimal.times(1e18).div(BigDecimal(price.toString())))
             } else {
                 tvl = tvl.plus(balanceDecimal)
             }
@@ -103,7 +103,7 @@ export async function handleRemoveLiquidity(ctx: EvmLogHandlerContext<Store>, { 
             let balance: BigInt = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
             if (toHex(tokens[i].address) == poolAddress) {
-                tvl = tvl.plus(balanceDecimal.times(BigDecimal(price.toString())).div(1e18))
+                tvl = tvl.plus(balanceDecimal.times(1e18).div(BigDecimal(price.toString())))
             } else {
                 tvl = tvl.plus(balanceDecimal)
             }
@@ -164,7 +164,7 @@ export async function handleRemoveLiquidityOne(ctx: EvmLogHandlerContext<Store>,
             let balance: BigInt = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
             if (toHex(tokens[i].address) == poolAddress) {
-                tvl = tvl.plus(balanceDecimal.times(BigDecimal(price.toString())).div(1e18))
+                tvl = tvl.plus(balanceDecimal.times(1e18).div(BigDecimal(price.toString())))
             } else {
                 tvl = tvl.plus(balanceDecimal)
             }
@@ -250,13 +250,13 @@ export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>, { poolAd
             let soldToken = await getOrCreateToken(ctx, toHex(tokens[event.soldId.toNumber()].address))
             let sellVolume = BigDecimal(event.tokensSold.toString()).div(Math.pow(10, Number(soldToken.decimals)))
             if (toHex(tokens[event.soldId.toNumber()].address) == poolAddress) {
-                sellVolume = sellVolume.times(new BigDecimal(price.toString())).div(1e18)
+                sellVolume = sellVolume.times(1e18).div(new BigDecimal(price.toString()))
             }
 
             let boughtToken = await getOrCreateToken(ctx, toHex(tokens[event.boughtId.toNumber()].address))
             let buyVolume = BigDecimal(event.tokensBought.toString()).div(Math.pow(10, Number(boughtToken.decimals)))
             if (toHex(tokens[event.boughtId.toNumber()].address) == poolAddress) {
-                buyVolume = buyVolume.times(new BigDecimal(price.toString())).div(1e18)
+                buyVolume = buyVolume.times(1e18).div(new BigDecimal(price.toString()))
             }
 
             let volume = sellVolume.plus(buyVolume).div(2)
@@ -281,7 +281,7 @@ export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>, { poolAd
                     let balance: BigInt = balances[i]
                     let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
                     if (toHex(tokens[event.boughtId.toNumber()].address) == poolAddress) {
-                        tvl = tvl.plus(balanceDecimal.times(BigDecimal(price.toString()))).div(1e18)
+                        tvl = tvl.plus(balanceDecimal.times(1e18).div(BigDecimal(price.toString())))
                     } else {
                         tvl = tvl.plus(balanceDecimal)
                     }
