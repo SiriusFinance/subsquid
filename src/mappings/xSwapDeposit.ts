@@ -277,12 +277,18 @@ async function updateTVL(
     price: BigInt
 ) {
     let swapDepositContract = new XSwapDeposit.Contract(ctx, toHex(swap.address))
+    let swapContract
+
     if (!swap.metaSwapAddress) {
         swap.metaSwapAddress = decodeHex(await swapDepositContract.META_POOL())
+        swapContract = new XSwap.Contract(ctx, toHex(swap.metaSwapAddress))
+        swap.token0 = decodeHex(await swapContract.coins(BigNumber.from(0)))
+        swap.token1 = decodeHex(await swapContract.coins(BigNumber.from(1)))
         ctx.store.save(swap)
     }
-    let swapContract = new XSwap.Contract(ctx, toHex(swap.metaSwapAddress))
-    let tokenAddresses = [await swapContract.coins(BigNumber.from(0)), await swapContract.coins(BigNumber.from(1))]
+
+    if (!swapContract) swapContract = new XSwap.Contract(ctx, toHex(swap.metaSwapAddress))
+    let tokenAddresses = [toHex(swap.token0!), toHex(swap.token1!)]
 
     let tvl: BigDecimal = BigDecimal('0')
     for (let i = 0; i < 2; i++) {

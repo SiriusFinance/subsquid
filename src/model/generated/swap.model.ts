@@ -26,6 +26,12 @@ export class Swap {
     @Column_('bytea', { nullable: true })
     metaSwapAddress?: Uint8Array
 
+    @Column_('bytea', { nullable: true })
+    token0?: Uint8Array
+
+    @Column_('bytea', { nullable: true })
+    token1?: Uint8Array
+
     @Column_('int4', { nullable: false })
     numTokens!: number
 
