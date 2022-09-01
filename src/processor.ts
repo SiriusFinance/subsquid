@@ -155,19 +155,47 @@ processor.addEvmLog(VE_TOKEN_ADDRESS, {
 })
 // JPYC Metapool
 processor.addEvmLog(JPYC_META_DEPOSIT, {
-    filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
+    filter: [
+        [
+            XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic,
+            XSwapDeposit.events['AddLiquidity(address,uint256[],uint256,uint256,uint256)'].topic,
+            XSwapDeposit.events['RemoveLiquidity(address,uint256[2],uint256,uint256)'].topic,
+            XSwapDeposit.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)'].topic,
+        ],
+    ],
     range: { from: 1099458 },
 })
 processor.addEvmLog(WBTC_META_DEPOSIT, {
-    filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
+    filter: [
+        [
+            XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic,
+            XSwapDeposit.events['AddLiquidity(address,uint256[],uint256,uint256,uint256)'].topic,
+            XSwapDeposit.events['RemoveLiquidity(address,uint256[2],uint256,uint256)'].topic,
+            XSwapDeposit.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)'].topic,
+        ],
+    ],
     range: { from: 1138805 },
 })
 processor.addEvmLog(WETH_META_DEPOSIT, {
-    filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
+    filter: [
+        [
+            XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic,
+            XSwapDeposit.events['AddLiquidity(address,uint256[],uint256,uint256,uint256)'].topic,
+            XSwapDeposit.events['RemoveLiquidity(address,uint256[2],uint256,uint256)'].topic,
+            XSwapDeposit.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)'].topic,
+        ],
+    ],
     range: { from: 1138820 },
 })
 processor.addEvmLog(WBNB_META_DEPOSIT, {
-    filter: [[XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic]],
+    filter: [
+        [
+            XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].topic,
+            XSwapDeposit.events['AddLiquidity(address,uint256[],uint256,uint256,uint256)'].topic,
+            XSwapDeposit.events['RemoveLiquidity(address,uint256[2],uint256,uint256)'].topic,
+            XSwapDeposit.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)'].topic,
+        ],
+    ],
     range: { from: 1138838 },
 })
 
@@ -272,6 +300,22 @@ processor.run(database, async (ctx) => {
                     case WETH_META_DEPOSIT:
                     case WBNB_META_DEPOSIT:
                         switch (item.event.args.topics[0]) {
+                            case XSwapDeposit.events['AddLiquidity(address,uint256[],uint256,uint256,uint256)'].topic:
+                                await XSwapDepositHandlers.handleAddLiquidity(evmCtx, {
+                                    metaTokenAddress: POOL_ADDRESSES[item.event.args.address],
+                                })
+                                break
+                            case XSwapDeposit.events['RemoveLiquidity(address,uint256[2],uint256,uint256)'].topic:
+                                await XSwapDepositHandlers.handleRemoveLiquidity(evmCtx, {
+                                    metaTokenAddress: POOL_ADDRESSES[item.event.args.address],
+                                })
+                                break
+                            case XSwapDeposit.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)']
+                                .topic:
+                                await XSwapDepositHandlers.handleRemoveLiquidityOne(evmCtx, {
+                                    metaTokenAddress: POOL_ADDRESSES[item.event.args.address],
+                                })
+                                break
                             case XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)']
                                 .topic:
                                 await XSwapDepositHandlers.handleTokenSwap(evmCtx, {
