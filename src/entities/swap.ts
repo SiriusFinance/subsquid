@@ -286,6 +286,10 @@ export async function getOrCreateXSwap(ctx: EvmLogHandlerContext<Store>, address
         swap.balances = info.balances
         swap.lpToken = decodeHex(info.lpToken)
 
+        const swapContract = new XSwap.Contract(ctx, info.metaSwapAddress)
+        swap.token0 = decodeHex(await swapContract.coins(BigNumber.from(0)))
+        swap.token1 = decodeHex(await swapContract.coins(BigNumber.from(1)))
+
         swap.a = info.a
 
         swap.swapFee = info.swapFee
