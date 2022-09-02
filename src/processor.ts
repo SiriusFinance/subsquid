@@ -10,6 +10,7 @@ import * as SwapNormalHandlers from './mappings/swapNormal'
 import * as VotingEscrowHandlers from './mappings/votingEscrow'
 import * as XSwapDepositHandlers from './mappings/xSwapDeposit'
 import { Item } from '@subsquid/ss58'
+import { getTokenPrice } from './libs/uniswap'
 
 const SRS4_SWAP = '0x417E9d065ee22DFB7CC6C63C403600E27627F333'.toLowerCase()
 const LAY4_SWAP = '0x0fB8C4eB33A30eBb01588e3110968430E3E69D58'.toLowerCase()
@@ -209,6 +210,10 @@ processor.run(database, async (ctx) => {
                     block: block.header,
                     event: item.event,
                 }
+
+                // const price = await getTokenPrice(evmCtx, '0xBB1290c1829007F440C771b37718FAbf309cd527', 1000n)
+                // console.log({ price: price.toBigInt() })
+
                 const topic = item.event.args.topics[0]
                 // blockHeight - pool - event
                 const measureKey = `${block.header.height}-${item.event.args.address.substr(-6)}-${topic.substr(-6)}`
