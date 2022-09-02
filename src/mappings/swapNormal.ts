@@ -25,6 +25,14 @@ import { getSystemInfo, toSeconds } from '../entities/system'
 import { decodeHex, EvmLogHandlerContext, toHex } from '@subsquid/substrate-processor'
 import { Store } from '@subsquid/typeorm-store'
 import * as SwapNormal from '../abi/SwapNormal'
+import { getToken1Price } from '../libs/uniswap'
+
+async function getPrice(ctx: EvmLogHandlerContext<Store>, pairAddress: string = '') {
+    const normalPrice = async () => 1
+    const astarPrice = async () => await getToken1Price(ctx, pairAddress)
+
+    return pairAddress ? await astarPrice() : await normalPrice()
+}
 
 export async function handleNewAdminFee(ctx: EvmLogHandlerContext<Store>): Promise<void> {
     let swap = await getOrCreateSwap(ctx, ctx.event.args.address)
@@ -455,7 +463,9 @@ export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>): Promise
                 let token = await getOrCreateToken(ctx, toHex(tokens[i].address))
                 if (token !== null) {
                     let balance: BigInt = balances[i]
-                    let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
+                    let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(
+                        Math.pow(10, Number(token.decimals))
+                    )
                     tvl = tvl.plus(balanceDecimal)
                 }
             }
