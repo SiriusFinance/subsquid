@@ -12,6 +12,6 @@ export async function getTokenPrice(ctx: EvmLogHandlerContext<Store>, pairAddres
     console.log({ _reserve0, _reserve1 })
 
     // decimals
-    const res0 = _reserve0.mul(BigNumber.from(10)).pow(await token1.decimals())
+    const res0 = _reserve0.mul(BigNumber.from(10).pow(await token1.decimals()))
     return BigNumber.from(amount).mul(res0).div(_reserve1) //return amount of token0 needed to buy token1
 }

@@ -211,8 +211,8 @@ processor.run(database, async (ctx) => {
                     event: item.event,
                 }
 
-                // const price = await getTokenPrice(evmCtx, '0xBB1290c1829007F440C771b37718FAbf309cd527', 1000n)
-                // console.log({ price: price.toBigInt() })
+                const price = await getTokenPrice(evmCtx, '0xBB1290c1829007F440C771b37718FAbf309cd527', 1000n)
+                console.log({ price: price.toNumber() })
 
                 const topic = item.event.args.topics[0]
                 // blockHeight - pool - event
