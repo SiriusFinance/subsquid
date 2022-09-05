@@ -32,10 +32,9 @@ type Opts = {
 }
 
 async function getPrice(ctx: EvmLogHandlerContext<Store>, pairAddress: string = '') {
-    const normalPrice = async () => 1
     const astarPrice = async () => await getToken1Price(ctx, pairAddress)
 
-    return pairAddress ? await astarPrice() : await normalPrice()
+    return pairAddress ? await astarPrice() : 1
 }
 
 export async function handleNewAdminFee(ctx: EvmLogHandlerContext<Store>): Promise<void> {
