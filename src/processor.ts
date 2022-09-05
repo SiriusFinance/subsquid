@@ -205,23 +205,25 @@ processor.addEvmLog(WBNB_META_DEPOSIT, {
 processor.run(database, async (ctx) => {
     for (const block of ctx.blocks) {
         for (const item of block.items as unknown as Array<BatchBlock<Item> & { name: string; event: any }>) {
-            // console.log(item)
             if (item.name === 'EVM.Log') {
                 const evmCtx = {
                     ...ctx,
                     block: block.header,
                     event: item.event,
                 }
-
+                const evtAddr = item.event.args.address
                 const topic = item.event.args.topics[0]
                 // blockHeight - pool - event
-                const measureKey = `${block.header.height}-${item.event.args.address.substr(-6)}-${topic.substr(-6)}`
+                const measureKey = `${block.header.height}-${evtAddr.substr(-6)}-${topic.substr(-6)}`
                 console.time(measureKey)
-                switch (item.event.args.address) {
+                switch (evtAddr) {
                     case SRS4_SWAP:
                     case LAY4_SWAP:
                     case NASTR_SWAP:
                     case AVAULT_SWAP:
+                        const opts = {
+                            pairAddress: evtAddr === NASTR_SWAP ? ASTR_USDC_PAIR : '',
+                        }
                         switch (topic) {
                             case SwapNormal.events['NewAdminFee(uint256)'].topic:
                                 await SwapNormalHandlers.handleNewAdminFee(evmCtx)
@@ -239,27 +241,27 @@ processor.run(database, async (ctx) => {
                                 await SwapNormalHandlers.handleStopRampA(evmCtx)
                                 break
                             case SwapNormal.events['AddLiquidity(address,uint256[],uint256[],uint256,uint256)'].topic:
-                                await SwapNormalHandlers.handleAddLiquidity(evmCtx)
+                                await SwapNormalHandlers.handleAddLiquidity(evmCtx, opts)
                                 break
                             case SwapNormal.events['RemoveLiquidity(address,uint256[],uint256)'].topic:
-                                await SwapNormalHandlers.handleRemoveLiquidity(evmCtx)
+                                await SwapNormalHandlers.handleRemoveLiquidity(evmCtx, opts)
                                 break
                             case SwapNormal.events[
                                 'RemoveLiquidityImbalance(address,uint256[],uint256[],uint256,uint256)'
                             ].topic:
-                                await SwapNormalHandlers.handleRemoveLiquidityImbalance(evmCtx)
+                                await SwapNormalHandlers.handleRemoveLiquidityImbalance(evmCtx, opts)
                                 break
                             case SwapNormal.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)'].topic:
-                                await SwapNormalHandlers.handleRemoveLiquidityOne(evmCtx)
+                                await SwapNormalHandlers.handleRemoveLiquidityOne(evmCtx, opts)
                                 break
                             case SwapNormal.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].topic:
-                                await SwapNormalHandlers.handleTokenSwap(evmCtx)
+                                await SwapNormalHandlers.handleTokenSwap(evmCtx, opts)
                                 break
                         }
                         break
                     case OUSD_META_SWAP:
                     case BAI_META_SWAP:
-                        switch (item.event.args.topics[0]) {
+                        switch (topic) {
                             case MetaSwap.events['NewAdminFee(uint256)'].topic:
                                 await MetaSwapHandlers.handleNewAdminFee(evmCtx)
                                 break
@@ -292,7 +294,7 @@ processor.run(database, async (ctx) => {
                         }
                         break
                     case VE_TOKEN_ADDRESS:
-                        switch (item.event.args.topics[0]) {
+                        switch (topic) {
                             case VotingEscrow.events['Deposit(address,uint256,uint256,int128,uint256)'].topic:
                                 await VotingEscrowHandlers.handleDeposit(evmCtx)
                                 await VotingEscrowHandlers.updateVeHolder(evmCtx)
@@ -303,28 +305,23 @@ processor.run(database, async (ctx) => {
                     case WBTC_META_DEPOSIT:
                     case WETH_META_DEPOSIT:
                     case WBNB_META_DEPOSIT:
-                        switch (item.event.args.topics[0]) {
+                        const opts2 = {
+                            metaTokenAddress: POOL_ADDRESSES[evtAddr],
+                        }
+                        switch (topic) {
                             case XSwapDeposit.events['AddLiquidity(address,uint256[],uint256,uint256,uint256)'].topic:
-                                await XSwapDepositHandlers.handleAddLiquidity(evmCtx, {
-                                    metaTokenAddress: POOL_ADDRESSES[item.event.args.address],
-                                })
+                                await XSwapDepositHandlers.handleAddLiquidity(evmCtx, opts2)
                                 break
                             case XSwapDeposit.events['RemoveLiquidity(address,uint256[2],uint256,uint256)'].topic:
-                                await XSwapDepositHandlers.handleRemoveLiquidity(evmCtx, {
-                                    metaTokenAddress: POOL_ADDRESSES[item.event.args.address],
-                                })
+                                await XSwapDepositHandlers.handleRemoveLiquidity(evmCtx, opts2)
                                 break
                             case XSwapDeposit.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)']
                                 .topic:
-                                await XSwapDepositHandlers.handleRemoveLiquidityOne(evmCtx, {
-                                    metaTokenAddress: POOL_ADDRESSES[item.event.args.address],
-                                })
+                                await XSwapDepositHandlers.handleRemoveLiquidityOne(evmCtx, opts2)
                                 break
                             case XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)']
                                 .topic:
-                                await XSwapDepositHandlers.handleTokenSwap(evmCtx, {
-                                    metaTokenAddress: POOL_ADDRESSES[item.event.args.address],
-                                })
+                                await XSwapDepositHandlers.handleTokenSwap(evmCtx, opts2)
                                 break
                         }
                         break

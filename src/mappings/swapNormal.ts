@@ -27,6 +27,10 @@ import { Store } from '@subsquid/typeorm-store'
 import * as SwapNormal from '../abi/SwapNormal'
 import { getToken1Price } from '../libs/uniswap'
 
+type Opts = {
+    pairAddress?: string
+}
+
 async function getPrice(ctx: EvmLogHandlerContext<Store>, pairAddress: string = '') {
     const normalPrice = async () => 1
     const astarPrice = async () => await getToken1Price(ctx, pairAddress)
@@ -139,10 +143,11 @@ export async function handleStopRampA(ctx: EvmLogHandlerContext<Store>): Promise
     await ctx.store.save(log)
 }
 
-export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>): Promise<void> {
+export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>, { pairAddress }: Opts): Promise<void> {
     let swap = await getOrCreateSwap(ctx, ctx.event.args.address)
     let balances = await getBalancesSwap(ctx, ctx.event.args.address, swap.numTokens)
     swap.balances = balances
+    let price = await getPrice(ctx, pairAddress)
 
     // update TVL
     let tokens = swap.tokens
@@ -152,7 +157,11 @@ export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>): Prom
         if (token !== null) {
             let balance = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            tvl = tvl.plus(balanceDecimal)
+            if (price && price !== 1) {
+                tvl = tvl.plus(balanceDecimal.div(BigDecimal(price.toString())))
+            } else {
+                tvl = tvl.plus(balanceDecimal)
+            }
         }
     }
     swap.tvl = tvl.toFixed()
@@ -203,10 +212,11 @@ export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>): Prom
     }
 }
 
-export async function handleRemoveLiquidity(ctx: EvmLogHandlerContext<Store>): Promise<void> {
+export async function handleRemoveLiquidity(ctx: EvmLogHandlerContext<Store>, { pairAddress }: Opts): Promise<void> {
     let swap = await getOrCreateSwap(ctx, ctx.event.args.address)
     let balances = await getBalancesSwap(ctx, ctx.event.args.address, swap.numTokens)
     swap.balances = balances
+    let price = await getPrice(ctx, pairAddress)
 
     // update TVL
     let tokens = swap.tokens
@@ -216,7 +226,11 @@ export async function handleRemoveLiquidity(ctx: EvmLogHandlerContext<Store>): P
         if (token !== null) {
             let balance = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            tvl = tvl.plus(balanceDecimal)
+            if (price && price !== 1) {
+                tvl = tvl.plus(balanceDecimal.div(BigDecimal(price.toString())))
+            } else {
+                tvl = tvl.plus(balanceDecimal)
+            }
         }
     }
     swap.tvl = tvl.toFixed()
@@ -265,10 +279,11 @@ export async function handleRemoveLiquidity(ctx: EvmLogHandlerContext<Store>): P
     }
 }
 
-export async function handleRemoveLiquidityOne(ctx: EvmLogHandlerContext<Store>): Promise<void> {
+export async function handleRemoveLiquidityOne(ctx: EvmLogHandlerContext<Store>, { pairAddress }: Opts): Promise<void> {
     let swap = await getOrCreateSwap(ctx, ctx.event.args.address)
     let balances = await getBalancesSwap(ctx, ctx.event.args.address, swap.numTokens)
     swap.balances = balances
+    let price = await getPrice(ctx, pairAddress)
 
     // update TVL
     let tokens = swap.tokens
@@ -278,7 +293,11 @@ export async function handleRemoveLiquidityOne(ctx: EvmLogHandlerContext<Store>)
         if (token !== null) {
             let balance = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            tvl = tvl.plus(balanceDecimal)
+            if (price && price !== 1) {
+                tvl = tvl.plus(balanceDecimal.div(BigDecimal(price.toString())))
+            } else {
+                tvl = tvl.plus(balanceDecimal)
+            }
         }
     }
     swap.tvl = tvl.toFixed()
@@ -340,10 +359,14 @@ export async function handleRemoveLiquidityOne(ctx: EvmLogHandlerContext<Store>)
     }
 }
 
-export async function handleRemoveLiquidityImbalance(ctx: EvmLogHandlerContext<Store>): Promise<void> {
+export async function handleRemoveLiquidityImbalance(
+    ctx: EvmLogHandlerContext<Store>,
+    { pairAddress }: Opts
+): Promise<void> {
     let swap = await getOrCreateSwap(ctx, ctx.event.args.address)
     let balances = await getBalancesSwap(ctx, ctx.event.args.address, swap.numTokens)
     swap.balances = balances
+    let price = await getPrice(ctx, pairAddress)
 
     // update TVL
     let tokens = swap.tokens
@@ -353,7 +376,11 @@ export async function handleRemoveLiquidityImbalance(ctx: EvmLogHandlerContext<S
         if (token !== null) {
             let balance = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            tvl = tvl.plus(balanceDecimal)
+            if (price && price !== 1) {
+                tvl = tvl.plus(balanceDecimal.div(BigDecimal(price.toString())))
+            } else {
+                tvl = tvl.plus(balanceDecimal)
+            }
         }
     }
     swap.tvl = tvl.toFixed()
@@ -408,13 +435,15 @@ export async function handleRemoveLiquidityImbalance(ctx: EvmLogHandlerContext<S
     }
 }
 
-export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>): Promise<void> {
+export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>, { pairAddress }: Opts): Promise<void> {
     let swap = await getOrCreateSwap(ctx, ctx.event.args.address)
     let balances = await getBalancesSwap(ctx, ctx.event.args.address, swap.numTokens)
     swap.balances = balances
     await ctx.store.save(swap)
 
     const event = SwapNormal.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].decode(ctx.event.args)
+
+    let price = await getPrice(ctx, pairAddress)
 
     if (swap != null) {
         let exchange = new Exchange({
@@ -466,7 +495,11 @@ export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>): Promise
                     let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(
                         Math.pow(10, Number(token.decimals))
                     )
-                    tvl = tvl.plus(balanceDecimal)
+                    if (price && price !== 1) {
+                        tvl = tvl.plus(balanceDecimal.div(BigDecimal(price.toString())))
+                    } else {
+                        tvl = tvl.plus(balanceDecimal)
+                    }
                 }
             }
             swap.tvl = tvl.toFixed()
