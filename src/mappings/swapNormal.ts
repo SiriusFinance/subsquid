@@ -156,11 +156,7 @@ export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>, { pai
         if (token !== null) {
             let balance = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            if (price && price !== 1) {
-                tvl = tvl.plus(balanceDecimal.div(BigDecimal(price.toString())))
-            } else {
-                tvl = tvl.plus(balanceDecimal)
-            }
+            tvl = tvl.plus(balanceDecimal.times(BigDecimal(price.toString())))
         }
     }
     swap.tvl = tvl.toFixed()
@@ -225,11 +221,7 @@ export async function handleRemoveLiquidity(ctx: EvmLogHandlerContext<Store>, { 
         if (token !== null) {
             let balance = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            if (price && price !== 1) {
-                tvl = tvl.plus(balanceDecimal.div(BigDecimal(price.toString())))
-            } else {
-                tvl = tvl.plus(balanceDecimal)
-            }
+            tvl = tvl.plus(balanceDecimal.times(BigDecimal(price.toString())))
         }
     }
     swap.tvl = tvl.toFixed()
@@ -292,11 +284,7 @@ export async function handleRemoveLiquidityOne(ctx: EvmLogHandlerContext<Store>,
         if (token !== null) {
             let balance = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            if (price && price !== 1) {
-                tvl = tvl.plus(balanceDecimal.div(BigDecimal(price.toString())))
-            } else {
-                tvl = tvl.plus(balanceDecimal)
-            }
+            tvl = tvl.plus(balanceDecimal.times(BigDecimal(price.toString())))
         }
     }
     swap.tvl = tvl.toFixed()
@@ -375,11 +363,7 @@ export async function handleRemoveLiquidityImbalance(
         if (token !== null) {
             let balance = balances[i]
             let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(Math.pow(10, Number(token.decimals)))
-            if (price && price !== 1) {
-                tvl = tvl.plus(balanceDecimal.div(BigDecimal(price.toString())))
-            } else {
-                tvl = tvl.plus(balanceDecimal)
-            }
+            tvl = tvl.plus(balanceDecimal.times(BigDecimal(price.toString())))
         }
     }
     swap.tvl = tvl.toFixed()
@@ -494,11 +478,7 @@ export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>, { pairAd
                     let balanceDecimal: BigDecimal = BigDecimal(balance.toString()).div(
                         Math.pow(10, Number(token.decimals))
                     )
-                    if (price && price !== 1) {
-                        tvl = tvl.plus(balanceDecimal.div(BigDecimal(price.toString())))
-                    } else {
-                        tvl = tvl.plus(balanceDecimal)
-                    }
+                    tvl = tvl.plus(balanceDecimal.times(BigDecimal(price.toString())))
                 }
             }
             swap.tvl = tvl.toFixed()
