@@ -18,14 +18,14 @@ export async function updateStakeAcct(ctx: EvmLogHandlerContext<Store>, account:
 }
 
 export async function handlePoolDeposit(ctx: EvmLogHandlerContext<Store>): Promise<void> {
-  const event = PoolsEvents['Stake(address,uint256)'].decode(ctx.event.args)
+  const event = PoolsEvents['Stake(address,uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
   updateStakeAcct(ctx, event.who)
 }
 export async function handlePoolTierDeposit(ctx: EvmLogHandlerContext<Store>): Promise<void> {
-  const event = PoolsTierEvents['Stake(address,uint256)'].decode(ctx.event.args)
+  const event = PoolsTierEvents['Stake(address,uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
   updateStakeAcct(ctx, event.who)
 }
 export async function handleFarmStake(ctx: EvmLogHandlerContext<Store>): Promise<void> {
-  const event = FarmsEvents['Staked(address,uint256,uint256,uint256)'].decode(ctx.event.args)
+  const event = FarmsEvents['Staked(address,uint256,uint256,uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
   updateStakeAcct(ctx, event.user)
 }

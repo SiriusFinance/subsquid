@@ -22,7 +22,7 @@ import { Big as BigDecimal } from 'big.js'
 export async function handleNewAdminFee(ctx: EvmLogHandlerContext<Store>): Promise<void> {
     let swap = await getOrCreateMetaSwap(ctx)
 
-    const event = SwapNormal.events['NewAdminFee(uint256)'].decode(ctx.event.args)
+    const event = SwapNormal.events['NewAdminFee(uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
     swap.adminFee = event.newAdminFee.toBigInt()
     await ctx.store.save(swap)
 
@@ -43,7 +43,7 @@ export async function handleNewAdminFee(ctx: EvmLogHandlerContext<Store>): Promi
 export async function handleNewSwapFee(ctx: EvmLogHandlerContext<Store>): Promise<void> {
     let swap = await getOrCreateMetaSwap(ctx)
 
-    const event = SwapNormal.events['NewSwapFee(uint256)'].decode(ctx.event.args)
+    const event = SwapNormal.events['NewSwapFee(uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
     swap.swapFee = event.newSwapFee.toBigInt()
     await ctx.store.save(swap)
 
@@ -64,7 +64,7 @@ export async function handleNewSwapFee(ctx: EvmLogHandlerContext<Store>): Promis
 export async function handleRampA(ctx: EvmLogHandlerContext<Store>): Promise<void> {
     let swap = await getOrCreateMetaSwap(ctx)
 
-    const event = SwapNormal.events['RampA(uint256,uint256,uint256,uint256)'].decode(ctx.event.args)
+    const event = SwapNormal.events['RampA(uint256,uint256,uint256,uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
 
     let log = new SwapEvent({ id: 'ramp_A-' + ctx.event.evmTxHash })
 
@@ -86,7 +86,7 @@ export async function handleRampA(ctx: EvmLogHandlerContext<Store>): Promise<voi
 export async function handleStopRampA(ctx: EvmLogHandlerContext<Store>): Promise<void> {
     let swap = await getOrCreateMetaSwap(ctx)
 
-    const event = SwapNormal.events['StopRampA(uint256,uint256)'].decode(ctx.event.args)
+    const event = SwapNormal.events['StopRampA(uint256,uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
     swap.a = event.currentA.toBigInt()
     await ctx.store.save(swap)
 
@@ -138,7 +138,7 @@ export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>): Prom
 
     await ctx.store.save(swap)
 
-    const event = SwapNormal.events['AddLiquidity(address,uint256[],uint256[],uint256,uint256)'].decode(ctx.event.args)
+    const event = SwapNormal.events['AddLiquidity(address,uint256[],uint256[],uint256,uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
 
     let log = new SwapEvent({ id: 'add_liquidity-' + ctx.event.evmTxHash })
 
@@ -191,7 +191,7 @@ export async function handleRemoveLiquidity(ctx: EvmLogHandlerContext<Store>): P
 
     await ctx.store.save(swap)
 
-    const event = SwapNormal.events['RemoveLiquidity(address,uint256[],uint256)'].decode(ctx.event.args)
+    const event = SwapNormal.events['RemoveLiquidity(address,uint256[],uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
 
     let log = new SwapEvent({ id: 'remove_liquidity-' + ctx.event.evmTxHash })
 
@@ -243,7 +243,7 @@ export async function handleRemoveLiquidityOne(ctx: EvmLogHandlerContext<Store>)
     await ctx.store.save(swap)
 
     const event = SwapNormal.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)'].decode(
-        ctx.event.args
+        ((ctx.event.args as any).log || ctx.event.args)
     )
 
     let log = new SwapEvent({
@@ -307,7 +307,7 @@ export async function handleRemoveLiquidityImbalance(ctx: EvmLogHandlerContext<S
     await ctx.store.save(swap)
 
     const event = SwapNormal.events['RemoveLiquidityImbalance(address,uint256[],uint256[],uint256,uint256)'].decode(
-        ctx.event.args
+        ((ctx.event.args as any).log || ctx.event.args)
     )
 
     let log = new SwapEvent({
@@ -336,7 +336,7 @@ export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>): Promise
     swap.balances = balances
     await ctx.store.save(swap)
 
-    const event = SwapNormal.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].decode(ctx.event.args)
+    const event = SwapNormal.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].decode(((ctx.event.args as any).log || ctx.event.args))
 
     if (swap != null) {
         let exchange = new Exchange({

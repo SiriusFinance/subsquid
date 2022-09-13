@@ -212,7 +212,7 @@ processor.run(database, async (ctx) => {
                     event: item.event,
                 }
                 const evtAddr = item.event.args.address
-                const topic = item.event.args.topics[0]
+                const topic = ((item.event.args.log || item.event.args)).topics[0]
                 // blockHeight - pool - event
                 const measureKey = `${block.header.height}-${evtAddr.substr(-6)}-${topic.substr(-6)}`
                 console.time(measureKey)

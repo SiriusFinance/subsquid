@@ -29,7 +29,7 @@ export async function handleAddLiquidity(ctx: EvmLogHandlerContext<Store>, { met
     let swap = await getOrCreateXSwap(ctx, ctx.event.args.address)
     let balances = await getBalancesXSwap(ctx, ctx.event.args.address)
 
-    const event = XSwapDeposit.events['AddLiquidity(address,uint256[],uint256,uint256,uint256)'].decode(ctx.event.args)
+    const event = XSwapDeposit.events['AddLiquidity(address,uint256[],uint256,uint256,uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
 
     let price = event.price
     swap.balances = balances
@@ -80,7 +80,7 @@ export async function handleRemoveLiquidity(
     let swap = await getOrCreateXSwap(ctx, ctx.event.args.address)
     let balances = await getBalancesXSwap(ctx, ctx.event.args.address)
 
-    const event = XSwapDeposit.events['RemoveLiquidity(address,uint256[2],uint256,uint256)'].decode(ctx.event.args)
+    const event = XSwapDeposit.events['RemoveLiquidity(address,uint256[2],uint256,uint256)'].decode(((ctx.event.args as any).log || ctx.event.args))
 
     let price = event.price
     swap.balances = balances
@@ -130,7 +130,7 @@ export async function handleRemoveLiquidityOne(
     let balances = await getBalancesXSwap(ctx, ctx.event.args.address)
 
     const event = XSwapDeposit.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)'].decode(
-        ctx.event.args
+        ((ctx.event.args as any).log || ctx.event.args)
     )
 
     let price = event.price
@@ -187,7 +187,7 @@ export async function handleTokenSwap(ctx: EvmLogHandlerContext<Store>, { metaTo
     let balances = await getBalancesXSwap(ctx, ctx.event.args.address)
 
     const event = XSwapDeposit.events['TokenExchange(address,uint256,uint256,uint256,uint256,uint256)'].decode(
-        ctx.event.args
+        ((ctx.event.args as any).log || ctx.event.args)
     )
 
     let price = event.price
