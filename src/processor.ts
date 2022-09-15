@@ -209,10 +209,18 @@ processor.run(database, async (ctx) => {
                 const evmCtx = {
                     ...ctx,
                     block: block.header,
-                    event: item.event,
+                    event: {
+                        ...item.event,
+                        args: {
+                            ...((item.event.args.log || item.event.args) as {
+                                address: string,
+                                topics: any
+                            })
+                        }
+                    }
                 }
-                const evtAddr = item.event.args.address
-                const topic = ((item.event.args.log || item.event.args)).topics[0]
+                const evtAddr = evmCtx.event.args.address;
+                const topic = evmCtx.event.args.topics[0]
                 // blockHeight - pool - event
                 const measureKey = `${block.header.height}-${evtAddr.substr(-6)}-${topic.substr(-6)}`
                 console.time(measureKey)
