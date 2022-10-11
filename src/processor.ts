@@ -20,6 +20,7 @@ const NASTR_SWAP = '0xEEa640c27620D7C448AD655B6e3FB94853AC01e3'.toLowerCase()
 const AVAULT_SWAP = '0xD8Bc543273B0E19eed34a295614963720c89f9e4'.toLowerCase()
 const BAI_META_SWAP = '0x290c7577D209c2d8DB06F377af31318cE31938fB'.toLowerCase()
 const OUSD_META_SWAP = '0xD18AbE9bcedeb5A9a65439e604b0BE8db0bdB176'.toLowerCase()
+const PUSDT_META_SWAP = '0x8e39e47Ca4A44D4316b88727Eb4407De877a9235'.toLowerCase()
 const VE_TOKEN_ADDRESS = '0xc9D383f1e6E5270D77ad8e198729e237b60b6397'.toLowerCase()
 
 const JPYC_META_DEPOSIT = '0x3cd1Fa4EeeFdf6c30E66c66A474e8E4dd509f54c'.toLowerCase()
@@ -151,6 +152,24 @@ processor.addEvmLog(BAI_META_SWAP, {
     ],
     range: { from: 914000 },
 })
+// PUSDT metapool
+processor.addEvmLog(PUSDT_META_SWAP, {
+    filter: [
+        [
+            MetaSwap.events['NewAdminFee(uint256)'].topic,
+            MetaSwap.events['NewSwapFee(uint256)'].topic,
+            MetaSwap.events['NewWithdrawFee(uint256)'].topic,
+            MetaSwap.events['RampA(uint256,uint256,uint256,uint256)'].topic,
+            MetaSwap.events['StopRampA(uint256,uint256)'].topic,
+            MetaSwap.events['AddLiquidity(address,uint256[],uint256[],uint256,uint256)'].topic,
+            MetaSwap.events['RemoveLiquidity(address,uint256[],uint256)'].topic,
+            MetaSwap.events['RemoveLiquidityImbalance(address,uint256[],uint256[],uint256,uint256)'].topic,
+            MetaSwap.events['RemoveLiquidityOne(address,uint256,uint256,uint256,uint256)'].topic,
+            MetaSwap.events['TokenSwap(address,uint256,uint256,uint128,uint128)'].topic,
+        ],
+    ],
+    range: { from: 1904617 },
+})
 // VotingEscrow
 processor.addEvmLog(VE_TOKEN_ADDRESS, {
     filter: [[VotingEscrow.events['Deposit(address,uint256,uint256,int128,uint256)'].topic]],
@@ -269,6 +288,7 @@ processor.run(database, async (ctx) => {
                         break
                     case OUSD_META_SWAP:
                     case BAI_META_SWAP:
+                    case PUSDT_META_SWAP:
                         switch (topic) {
                             case MetaSwap.events['NewAdminFee(uint256)'].topic:
                                 await MetaSwapHandlers.handleNewAdminFee(evmCtx)
